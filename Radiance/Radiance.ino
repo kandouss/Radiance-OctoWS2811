@@ -4,7 +4,6 @@
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 
-
 #define USE_OCTOWS2811
 #include <OctoWS2811.h>
 #include <FastLED.h>
@@ -15,6 +14,13 @@
 
 CRGB leds[LEDS_PER_CHANNEL * NUM_CHANNELS];
 
+IPAddress ip = {
+  192, 168, 123,    1
+};
+byte mac[] = {
+  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE// 0xED
+};
+
 // Radiance settings
 Radiance rad;
 
@@ -22,7 +28,7 @@ void setup() {
 //  Serial.begin(19200);
   delay(500);
 //  Serial.println("Beginning.");
-  rad.begin();
+  rad.begin(mac);
   rad.setPixelUpdateCallback(updatePixels);
   rad.setFrameShowCallback(showFrame);
   
@@ -52,4 +58,5 @@ void updatePixels(uint8_t data_channel, uint16_t data_offset, uint16_t data_leng
 
 void showFrame() {
     LEDS.show();
+    LEDS.delay(10);
 }

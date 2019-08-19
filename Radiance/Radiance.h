@@ -31,7 +31,8 @@ class Radiance
     Radiance();
 
     void begin();
-    void begin(byte mac[], byte ip[]);
+    void begin(byte mac[]);
+    void begin(byte mac[], IPAddress ip);
     void setServerIP(IPAddress srv);
 
     uint8_t read();

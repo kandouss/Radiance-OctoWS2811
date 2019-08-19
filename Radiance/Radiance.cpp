@@ -33,16 +33,29 @@ void Radiance::begin()
   delay(100);
   local_ip = Ethernet.localIP();
   Udp.begin(RADIANCE_LOCAL_PORT);
-  
-//  Serial.printf("Begun. at %d.%d.%d.%d\n", local_ip[0], local_ip[1], local_ip[2], local_ip[3]);
+  Serial.printf("Begun. at %d.%d.%d.%d\n", local_ip[0], local_ip[1], local_ip[2], local_ip[3]);
+}
+// Dash function
+void Radiance::begin(byte mac[])
+{
+  copyArray(mac, local_mac, 6);
+  Ethernet.begin(local_mac);
+  delay(100);
+  local_ip = Ethernet.localIP();
+  Udp.begin(RADIANCE_LOCAL_PORT);
+  Serial.printf("Begun. at %d.%d.%d.%d\n", local_ip[0], local_ip[1], local_ip[2], local_ip[3]);
 }
 
 // Dash function
-void Radiance::begin(byte mac[], byte ip[])
+void Radiance::begin(byte mac[], IPAddress ip)
 {
   copyArray(mac, local_mac, 6);
   local_ip = ip;
+  Ethernet.begin(local_mac, local_ip);
+  delay(100);
+  local_ip = Ethernet.localIP();
   Udp.begin(RADIANCE_LOCAL_PORT);
+  Serial.printf("Begun. at %d.%d.%d.%d\n", local_ip[0], local_ip[1], local_ip[2], local_ip[3]);
 }
 
 
