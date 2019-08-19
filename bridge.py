@@ -51,11 +51,12 @@ class RadianceTeensyBridge(radiance.LightOutputNode):
         #self.lookup_2d([(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)])
 
         # Instead, lets request 120 pixels around the border.
-        N = 30
-        self.lookup_2d = [(0, i / N) for i in range(N)]
-        self.lookup_2d += [(i / N, 1) for i in range(N)]
-        self.lookup_2d += [(1, 1 - i / N) for i in range(N)]
+        N = 150
+        self.lookup_2d = [(0.2, i / N) for i in range(N)]
+        self.lookup_2d += [(i / N, 0.8) for i in range(N)]
+        self.lookup_2d += [(0.8, 1 - i / N) for i in range(N)]
         self.lookup_2d += [(1 - i / N, 0) for i in range(N)]
+        self.lookup_2d = self.lookup_2d[:512]
 
         # If we stopped here, Radiance would visualize this display using the lookup coordinates
         # and show a square.
@@ -65,8 +66,9 @@ class RadianceTeensyBridge(radiance.LightOutputNode):
 
         def moveToCircle(x, y):
             l = math.hypot(x - 0.5, y - 0.5)
-            return (0.5 * (x - 0.5) / l + 0.5, 0.5 * (y - 0.5) / l + 0.5)
+            return (0.5 * (x - 0.5) / (l*3) + 0.5, 0.5 * (y - 0.5) / l + 0.5)
         self.physical_2d = [moveToCircle(x, y) for (x, y) in self.lookup_2d]
+        self.lookup_2d = self.physical_2d[:]
 
         # We can send radiance a PNG file to be used as a background image for visualization.
         # This logo image is not very useful, but perhaps some line-art of your venue would work well.
@@ -78,12 +80,14 @@ class RadianceTeensyBridge(radiance.LightOutputNode):
         # On flaky connections, set this to zero.
         # Doing so will request frames one-by-one in a synchronous manner,
         # which will avoid network congestion.
-        self.period = 20
+        self.period = 10
+        0.8
     def send_data(self, client_dict, values, channel, offset=0):
-        if len(values) > 256:
-            for k,packet in enumerate(grouper(256, values)):
-                self.send_data(client_dict, packet, channel, offset+k*256)
-
+        MAX_NUM_VALUES=20
+        if len(values) > MAX_NUM_VALUES:
+            for k,packet in enumerate(grouper(MAX_NUM_VALUES, values)):
+                self.send_data(client_dict, packet, channel, offset+k*MAX_NUM_VALUES)
+        print(offset, len(values))
         client_dict['sock'].sendto(
               data_message(values, channel=channel, offset=offset)
             , client_dict['ipport']
@@ -97,7 +101,7 @@ class RadianceTeensyBridge(radiance.LightOutputNode):
     def add_client(self, ip, port):
         cli_sock = socket.socket(socket.AF_INET, # Internet
                              socket.SOCK_DGRAM) # UDP
-        # cli_sock.bicnd((ip, port))
+        cli_sock.connect((ip, port))
         self.clients.append({
             'sock': cli_sock,
             'ipport': (ip, port)
@@ -115,7 +119,14 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Construct our device
 device = RadianceTeensyBridge()
-device.add_client("192.168.86.47", 8888)
+# device.add_client("192.168.86.47", 8888)
+device.add_client("192.168.0.101", 8888)
+device.add_client("192.168.0.102", 8888)
+device.add_client("192.168.0.103", 8888)
+device.add_client("192.168.0.104", 8888)
+device.add_client("192.168.0.105", 8888)
+device.add_client("192.168.0.106", 8888)
+device.add_client("192.168.0.107", 8888)
 
 # Start it going
 device.serve_forever()
