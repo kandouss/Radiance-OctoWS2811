@@ -61,7 +61,7 @@ class Segment:
 
     def add_channel(self, device_ip, port_no, channel_no, leds_no, swap_rg=False):
         self.channels += [Channel(device_ip, port_no, channel_no, leds_no, swap_rg)]
-        
+
     def create_lookup(self, leds_no=None):
         if leds_no is None:
             leds_no = 0
@@ -83,7 +83,7 @@ class Segment:
         self.lookup = list(interpPath(self.path,leds_no,i) for i in range(leds_no))
         self.physical = list(interpPath(self.preview,leds_no,i) for i in range(leds_no))
 #        for i in range(leds_no):
-#            self.lookup = 
+#            self.lookup =
 #        for i in range(leds_no):
 #            p = i * len(self.path) / (leds_no - 1)
 #            ppos = min(math.floor(p), len(self.path) - 2)
@@ -185,7 +185,7 @@ class RadianceTeensyBridge(radiance.LightOutputNode):
         self.clients = {}
         for segment in self.segments:
             for channel in segment.channels:
-                client = (channel.device_ip, channel.port_no) 
+                client = (channel.device_ip, channel.port_no)
                 if client in self.clients:
                     continue
                 cli_sock = socket.socket(socket.AF_INET, # Internet
@@ -200,9 +200,9 @@ class RadianceTeensyBridge(radiance.LightOutputNode):
         frame_pos = 0
         for segment in self.segments:
             for channel in segment.channels:
-                client = (channel.device_ip, channel.port_no) 
+                client = (channel.device_ip, channel.port_no)
                 self.send_data(self.clients[client], client, frame[frame_pos:frame_pos+channel.leds_no], channel.channel_no, 0, channel.swap_rg)
-    
+
         for client, socket in self.clients.items():
             self.send_frame_show(socket, client)
 
@@ -223,6 +223,31 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Construct our device
 device = RadianceTeensyBridge()
+
+sqrt_3_4 = (3**0.5)/4
+sqrt_2_2 = (2**0.5)/2
+top_tet_verts = np.asarray([[0,0.5,0],[sqrt_3_4,-0.25,0],[-sqrt_3_4,-0.25,0],[0,0,sqrt_2_2]])
+bottom_tet_verts = [top_tet_verts + top - top_tet_verts[-1] for top in top_tet_verts[0:3]]
+
+top_edges = np.asarray([[top_tet_verts[i],top_tet_verts[(i+1)%3]] for i in range(3)] + [[top_tet_verts[i],top_tet_verts[-1]] for i in range(3)])
+
+bottom_edges = np.concatenate([top_edges]+[np.asarray([[verts[i],verts[-1]] for i in range(3)])for verts in bottom_tet_verts])
+
+all_edges = np.concatenate([top_edges,bottom_edges])
+
+def rot2(angle):
+    c = np.cos(angle)
+    s = np.sin(angle)
+    return np.asarray([[c,-s],[s,c]])
+
+def rot3(angle,axis):
+    ind = [0,1,2]
+    ind.remove(axis)
+    i = np.identity(3)
+    row = [[ind[0],ind[0]],[ind[1],ind[1]]]
+    col = [ind,ind]
+    i[(row,col)] = rot2(angle)
+    return i
 
 unit= np.e**complex(0,np.pi*2/3)
 mid = np.e**complex(0,np.pi*1/3)
