@@ -61,7 +61,7 @@ class Segment:
 
     def add_channel(self, device_ip, port_no, channel_no, leds_no, swap_rg=False):
         self.channels += [Channel(device_ip, port_no, channel_no, leds_no, swap_rg)]
-
+        return self
     def create_lookup(self, leds_no=None):
         if leds_no is None:
             leds_no = 0
@@ -82,14 +82,6 @@ class Segment:
         assert(leds_no > 0)
         self.lookup = list(interpPath(self.path,leds_no,i) for i in range(leds_no))
         self.physical = list(interpPath(self.preview,leds_no,i) for i in range(leds_no))
-#        for i in range(leds_no):
-#            self.lookup =
-#        for i in range(leds_no):
-#            p = i * len(self.path) / (leds_no - 1)
-#            ppos = min(math.floor(p), len(self.path) - 2)
-#            pfrac = min(p - ppos, 1.0)
-#            self.lookup += [(self.path[ppos][0] * (1 - pfrac) + self.path[ppos+1][0] * pfrac,
-#                             self.path[ppos][1] * (1 - pfrac) + self.path[ppos+1][1] * pfrac)]
 
         self.lookup = []
         for i in range(leds_no):
@@ -108,43 +100,12 @@ class RadianceTeensyBridge(radiance.LightOutputNode):
         self.clients = {}
 
         self.MAX_NUM_VALUES=20
-        self.description = { "name":"Teensy Bridge","size":300.}
         """
         # This tells Radiance the name of our device, and how big the sampled canvas should be.
-        self.description = {
-            "name": "Teensy Bridge",
-            "size": [100, 100]
-        }
 
-        # This would request 5 pixels at the corners and center.
-        #self.lookup_2d([(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)])
-
-        # Instead, lets request 120 pixels around the border.
-        N = 150
-        self.lookup_2d = [(0.2, i / N) for i in range(N)]
-        self.lookup_2d += [(i / N, 0.8) for i in range(N)]
-        self.lookup_2d += [(0.8, 1 - i / N) for i in range(N)]
-        self.lookup_2d += [(1 - i / N, 0) for i in range(N)]
-        self.lookup_2d = self.lookup_2d[:512]
-
-        # If we stopped here, Radiance would visualize this display using the lookup coordinates
-        # and show a square.
-        # If the physical display looks different, we tell Radiance about it with the
-        # "physical coordinates" command.
-        # Lets tell Radiance to visualize the points as a circle instead.
-
-        def moveToCircle(x, y):
-            l = math.hypot(x - 0.5, y - 0.5)
-            return (0.5 * (x - 0.5) / (l*3) + 0.5, 0.5 * (y - 0.5) / l + 0.5)
-        self.physical_2d = [moveToCircle(x, y) for (x, y) in self.lookup_2d]
-        self.lookup_2d = self.physical_2d[:]
-
-        # We can send radiance a PNG file to be used as a background image for visualization.
-        # This logo image is not very useful, but perhaps some line-art of your venue would work well.
-
-        #with open("../resources/library/images/logo.png", "rb") as f:
-        #    self.geometry_2d = f.read()
         """
+        self.description = { "name":"Teensy Bridge","size":300.}
+
 
         # Ask for frames from Radiance every 20 ms (50 FPS).
         # On flaky connections, set this to zero.
@@ -276,4 +237,11 @@ device.create_radiance_lookup()
 device.init_clients()
 
 # Start it going
-device.serve_forever()
+while True:
+    try:
+        device.serve_forever()
+    except KeyboardInterrupt:
+        break
+    except Exception as e:
+        logging.exception(e)
+
