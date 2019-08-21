@@ -210,15 +210,10 @@ def rot3(angle,axis):
     i[(row,col)] = rot2(angle)
     return i
 
-unit= np.e**complex(0,np.pi*2/3)
-mid = np.e**complex(0,np.pi*1/3)
+lookup_edges   = all_edges * (3**-.5) + np.asarray([[[.5,.5,0]]])
+physical_edges = (all_edges * (3**-.5)).dot(rot3(np.pi/6,2)).dot(rot3(np.pi/3,0)) + np.asarray([[[.5,.5,0]]])
 
-part = 0.25*np.asarray([[0,1],[1,unit],[1,2],[unit,mid],[1.,mid]],dtype=np.complex64)*unit**-0.25
-full = np.concatenate([part,part*unit,part*unit*unit]) + complex(0.5,0.5)
-
-coords = np.dstack([full.real,full.imag])
-
-segs = [Segment(x,x) for x in coords]
+segs = [Segment(x[::,[0,1]],y[::,[0,1]]) for x,y in zip(lookup_edges,physical_edges)]
 
 for i,seg in enumerate(segs):
     seg.add_channel("192.168.0.101",8888,i,300,True)
